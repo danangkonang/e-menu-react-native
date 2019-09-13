@@ -12,11 +12,13 @@ choose the menu online without queuing and reduce restaurant expenses to pay the
 </p>
 
 **Run aplication:**
+```
 $ git clone https://github.com/danangkonang/e-menu-react-native
 $ cd e-menu-react-native
 $ yarn
 $ react-native run-ios #for ios
 $ react-native run-android #for android
+```
 
 ## Contact 
 * WA/TELEGRAM: +62 822-2137-0880
