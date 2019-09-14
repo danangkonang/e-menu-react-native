@@ -4,11 +4,11 @@ choose the menu online without queuing and reduce restaurant expenses to pay the
 
 ## Screenshots
 <p float="left">
-  <img src="https://danangkonang.github.io/assets/w-emenu-table.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/w-emenu-cart.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/w-emenu-confirm.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/w-emenu-nota.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/w-emenu-sukses.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-table.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-cart.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-confirm.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-nota.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-sukses.png" width="200" height="350" />
 </p>
 
 **Run aplication:**
