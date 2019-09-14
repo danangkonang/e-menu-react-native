@@ -2,13 +2,16 @@ import React, { Component } from 'react'
 import {
    View,
    Text,
-   AsyncStorage,
    TouchableOpacity,
    ScrollView,
    Image
 } from 'react-native'
+
+import AsyncStorage from '@react-native-community/async-storage'
+import{ convertToRupiah } from './function/Rupiah'
 import axios from 'axios'
 import Modal from "react-native-modal"
+import { from } from 'rxjs'
 export default class Menu extends Component {
    constructor(props){
       super(props)
@@ -27,11 +30,15 @@ export default class Menu extends Component {
          isModalVisibleConfirm: false,
          isModalVisible: false,
          bill:[],
-         totalBayar:{}
+         totalBayar:{},
+         btnAddMenu: false,
+         tanggal: ''
    }
 }
 
 componentWillMount(){
+
+
    AsyncStorage.getItem('tableNumber', (error, result) => {
       if (result) {
          this.setState({
@@ -71,6 +78,14 @@ componentWillMount(){
       const result = data.filter(data => data.idCategori == this.state.sub)
       this.setState({ menus: result })
    })
+
+   // const today = new Date()
+   const dd = new Date().getDate()
+   const mm = new Date().getMonth()+1
+   const yyyy = new Date().getFullYear()
+   const today = mm+'/'+dd+'/'+yyyy
+   // const tgl = '21 09 89'
+   this.setState({tanggal: today})
 }
 
 // hapus 
@@ -103,7 +118,8 @@ addOrder = (id, price) => {
       transactionId: this.state.transaction.transactionId,
       qty: 1,
       price: data[0].price,
-      status:0
+      status:0,
+      image: data[0].image
    }
    for (var i = 0; i < arr.length; i++) {
       if (arr[i].menuId === data[0].id) {
@@ -117,6 +133,8 @@ addOrder = (id, price) => {
    this.setState({ ordering: arr })
    this.setState({buttonConfirm:false})
    // console.log(arr)
+   // this.setState({buttonConfirm:true})
+   this.setState({buttonOrder:true})
 }
 
 destroyOrder = (id, index) => {
@@ -131,15 +149,17 @@ destroyOrder = (id, index) => {
 renderOrdering() {
    return this.state.ordering.map((item, i) => {
       return (
-         <View style={{ width: '50%', padding: 5 }}>
-            <TouchableOpacity key={item.id}
-               onPress={() => this.destroyOrder(item.id, i)}
-               style={{ backgroundColor: '#0397d5', padding: 7, alignItems: 'center', justifyContent: 'center', borderRadius: 6 }}>
-               <Text style={{ color: '#000' }}>{item.name}</Text>
-               <Text style={{ backgroundColor: '#fff', height: 20, width: 20, fontSize: 10, borderRadius: 50, textAlign: 'center', position: 'absolute', top: 3, right: 3, textAlignVertical: 'center' }}>{item.qty}</Text>
-
+         <View style={{flex:1,backgroundColor:'pink',marginRight:10,borderRadius:5,alignItems:'center'}}>
+            <Image style={{width:100,height:90,borderRadius:5}} source={{uri: item.image}}/>
+               <Text style={{ backgroundColor: '#ddd',color:'#000', height: 20, width: 20, fontSize: 10, borderRadius: 50, textAlign: 'center', position: 'absolute', top: 3, left: 3, textAlignVertical: 'center',fontWeight:'bold',fontSize:13,borderWidth:2,borderColor:'#fff' }}>{item.qty}</Text>
+            <TouchableOpacity 
+            onPress={() => this.destroyOrder(item.id, i)}
+            style={{backgroundColor:'red',height:20,width:20,borderRadius:50,position:'absolute',top:0,right:0}}>
+               <Text style={{ fontSize:13,textAlign:'center', textAlignVertical: 'center',fontWeight:'bold',color:'#fff'}}>X</Text>
             </TouchableOpacity>
-         </View>
+               <Text style={{position: 'absolute',fontSize:12,bottom:15,fontWeight:'bold'}}>{item.name}</Text>
+               <Text style={{position: 'absolute',fontSize:10,bottom:3,fontWeight:'bold'}}>Rp.{item.price}</Text>
+      </View>
       )
    })
 }
@@ -161,10 +181,12 @@ confirmOk =()=>{
 saveOrder=()=>{
    axios({
       method: 'post',
-      url: 'http://localhost:3000/order',
+      url: 'https://restourant-menu-api.herokuapp.com/order',
       data: this.state.ordering
    }).then((response) => {
+      // const newArr = this.state.bill.push(this.state.ordering)
       this.setState({ bill: this.state.ordering })
+      this.setState({btnAddMenu: true})
       this.setState({ ordering: [] })
       this.totalNya()
    })
@@ -178,11 +200,11 @@ totalNya(){
    }
    this.setState({totalBayar:{
       transactionId:this.state.transaction.transactionId,
-      subTotal:total,
+      subTotal:convertToRupiah(total),
       discount:0,
       serviceChange:0,
       tax:0,
-      total:total
+      total:convertToRupiah(total)
    }})
    this.setState({buttonOrder:true})
    this.setState({buttonBill:false})
@@ -193,14 +215,14 @@ updateTransaction=()=>{
    const data = {
       transactionId:this.state.totalBayar.transactionId,
       tableNumber: this.state.tableNumber,
-      subtotal:this.state.totalBayar.subTotal,
+      subtotal: this.state.totalBayar.subTotal,
       discount:this.state.totalBayar.discount,
       serviceCharge:this.state.totalBayar.serviceChange,
       tax:this.state.totalBayar.tax
    }
    axios({
       method: 'post',
-      url: 'http://localhost:3000/updateTransaction',
+      url: 'https://restourant-menu-api.herokuapp.com/updateTransaction',
       data: data
    }).then((response) => {
       this.updateStatus()
@@ -210,14 +232,14 @@ updateTransaction=()=>{
 updateStatus = ()=>{
    axios({
       method: 'post',
-      url: 'http://localhost:3000/finishOrder',
+      url: 'https://restourant-menu-api.herokuapp.com/finishOrder',
       data:{
          transactionId: this.state.totalBayar.transactionId
       } 
    }).then((response) => {
       axios({
          method: 'post',
-         url: 'http://localhost:3000/finishTransaction',
+         url: 'https://restourant-menu-api.herokuapp.com/finishTransaction',
          data: {
             transactionId: this.state.totalBayar.transactionId,
             finishedTime: new Date()
@@ -231,25 +253,42 @@ updateStatus = ()=>{
          newBill[i].status= 1
          this.setState({bill:newBill})
       }
-   },80000)
+   },70000)
 }
 
 successTransaction=()=>{
+   this.setState({ isModalVisible: !this.state.isModalVisible })
    this.props.navigation.navigate('okTransaction')
    this.setState({bill:[]})
    this.setState({totalBayar:{}})
-   AsyncStorage.getItem('tableNumber', (error, result) => {
-   })
-   AsyncStorage.getItem('transactionId', (error, res) => {
-   })
+   AsyncStorage.removeItem('transactionId')
+   AsyncStorage.removeItem('tableNumber')
+   // AsyncStorage.getItem('tableNumber', (error, result) => {
+   // })
+   // AsyncStorage.getItem('transactionId', (error, res) => {
+   // })
+}
+
+// convertToRupiah(angka=0){
+//    // console.log(angka)
+//    const rupiah = '';
+//    const angkarev = angka.toString().split('').reverse().join('');
+//    for(const i = 0; i < angkarev.length; i++)
+//    if(i%3 == 0) rupiah += angkarev.substr(i,3)+'.';
+//    return rupiah.split('',rupiah.length-1).reverse().join('');
+// }
+
+tanggal(){
+   const tgl = '21 09 89'
+   this.setState({tanggal: tgl})
 }
 
    render() {
       return (
-         <View style={{flex:1,backgroundColor:'#fff'}}>
-            {/* <Text style={{fontSize:20,fontWeight:'200'}}>{this.state.tableNumber}</Text>
-            <TouchableOpacity style={{backgroundColor:'tomato',margin:20}} onPress={this.hapus}>
-               <Text style={{fontSize:20,padding:10}}>hapus no meja</Text>
+         <View style={{flex:1,backgroundColor:'#eee'}}>
+
+            {/* <TouchableOpacity style={{backgroundColor:'tomato',margin:15,padding:10}} onPress={this.hapus}>
+               <Text>hapus</Text>
             </TouchableOpacity> */}
 
             {/* header */}
@@ -258,27 +297,28 @@ successTransaction=()=>{
                   <Text></Text>
                </View>
                <View>
-                  <Text>WAITING</Text>
+                  <Text style={{fontWeight:'bold',color:'#999'}}>Selamat datang</Text>
                </View>
-               <View>
-                  <Text>{this.state.tableNumber}</Text>
+               <View style={{alignItems:'center',justifyContent:'center',backgroundColor:'#0397d5',width:20,height:20,borderRadius:50}}>
+                  <Text style={{fontWeight:'bold',color:'#fff',}}>{this.state.tableNumber}</Text>
                </View>
             </View>
             
             {/* menus */}
-            <View style={{ backgroundColor: '#fff', flexDirection: 'row' }}>
+            <View style={{flexDirection: 'row' }}>
                {
                   this.state.categories.map((item, key) => (
                      <TouchableOpacity
+                     
                         key={item.id}
                         onPress={() => this.add(item.id, item.name)}
                         style={this.state.bgMenu == item.name ?
                            {
-                              backgroundColor: '#ddd', margin: 1, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, flex: 1, borderRadius: 4
-                           } : {
                               backgroundColor: '#0397d5', margin: 1, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, flex: 1, borderRadius: 4
+                           } : {
+                              backgroundColor: '#5bbbe4', margin: 1, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, flex: 1, borderRadius: 4
                            }}>
-                        <Text style={this.state.bgMenu == item.name ? { color: '#0397d5' } : { color: '#ddd' }}>{item.name}</Text>
+                        <Text style={this.state.bgMenu == item.name ? { color: '#f1f1f1',fontWeight:'bold'} : { color: '#f1f1f1',fontWeight:'bold'}}>{item.name}</Text>
                      </TouchableOpacity>
                   ))
                }
@@ -289,33 +329,39 @@ successTransaction=()=>{
                
                <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
                   {this.state.menus.map((item, e) => (
-                     <View style={{ width: '50%', padding: 5 }}>
+                     <View style={{ width: '50%', padding: 5 }} key={item.id}>
 
                         <TouchableOpacity
-                           key={e+1}
+                           disabled={this.state.btnAddMenu}
                            onPress={() => this.addOrder(item.id, item.price)}
-                           style={{ backgroundColor: '#ddd', borderRadius: 8 }}>
-                           <Image style={{ width: '100%', height: 140, borderTopLeftRadius: 8, borderTopRightRadius: 8 }} source={require('../images/nasgor.jpg')} />
+                           style={{ backgroundColor: '#ddd', borderRadius: 8, }}>
+                           <Image style={{ width: '100%', height: 160, borderTopLeftRadius: 8, borderTopRightRadius: 8, }} source={{uri: item.image}}/>
+                           
                            <View style={{ padding: 10 }}>
-                              <Text style={{ color: '#0397d5' }}>{item.name}</Text>
-                              <Text style={{ color: '#0397d5' }}>Rp.{item.price}</Text>
+                              <Text style={{ color: '#0397d5',fontWeight:'bold' }}>{item.name}</Text>
+                              <Text style={{ color: '#0397d5',fontWeight:'bold' }}>Rp.{item.price}</Text>
                            </View>
                         </TouchableOpacity>
 
                      </View>
-                  ))}
+                     
+                  ))
+                  
+                  
+                  }
                </View>
 
             </ScrollView>
             
             {/* footer */}
-            <View style={{ height: 140,padding: 5 ,paddingTop:0}}>
+            <View style={this.state.buttonConfirm === true?{
+               padding: 5 ,paddingTop:0}:{
+                  height: 150,padding: 5 ,paddingTop:0
+            }}>
 
-               <View style={{flex:1,borderColor:'#eee',borderWidth:2}}>
-                  <ScrollView>
-                     <View style={{ flexWrap: 'wrap', flexDirection: 'row', flex: 1 }}>
+               <View style={{flex:1,borderColor:'#ddd',borderWidth:2}}>
+                  <ScrollView horizontal style={{flexDirection:'row',padding:3}}>
                      {this.renderOrdering()}
-                     </View>
                   </ScrollView>
                </View>
 
@@ -329,7 +375,7 @@ successTransaction=()=>{
                   }:{ 
                      flex: 1, borderRadius: 8, backgroundColor: '#0397d5', alignItems: 'center', justifyContent: 'center',marginHorizontal:3
                   }}>
-                     <Text>Confirm</Text>
+                     <Text style={{color:'#f1f1f1',fontWeight:'bold'}}>Confirm</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
@@ -340,7 +386,7 @@ successTransaction=()=>{
                   }:{ 
                      flex: 1, borderRadius: 8, backgroundColor: '#0397d5', alignItems: 'center', justifyContent: 'center',marginHorizontal:3
                   }}>
-                     <Text>Call</Text>
+                     <Text style={{color:'#f1f1f1',fontWeight:'bold'}}>Call</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
@@ -351,7 +397,7 @@ successTransaction=()=>{
                   }:{ 
                      flex: 1, borderRadius: 8, backgroundColor: '#0397d5', alignItems: 'center', justifyContent: 'center',marginHorizontal:3
                   }}>
-                     <Text>Bill</Text>
+                     <Text style={{color:'#f1f1f1',fontWeight:'bold'}}>Bill</Text>
                   </TouchableOpacity>
 
                </View>
@@ -373,7 +419,7 @@ successTransaction=()=>{
                   </View>
                   <View style={{flexDirection:'row'}}>
                      <View style={{flex:1,padding:10}}>
-                        <TouchableOpacity onPress={this.toggleModalConfirm} style={{backgroundColor:'#0397d5',paddingVertical:8,borderRadius:4,alignItems:'center',justifyContent:'center',fontSize:16,borderWidth:2,borderColor:'#eee'}}>
+                        <TouchableOpacity onPress={this.toggleModalConfirm} style={{backgroundColor:'red',paddingVertical:8,borderRadius:4,alignItems:'center',justifyContent:'center',fontSize:16,borderWidth:2,borderColor:'#eee'}}>
                               <Text style={{fontSize:16,color:'#f1f1f1'}}>close</Text>
                         </TouchableOpacity>
                      </View>
@@ -400,12 +446,12 @@ successTransaction=()=>{
                <View style={{backgroundColor:'#fff',borderRadius:10,paddingTop:10,paddingBottom:10,flex:1,maxHeight:400}}>
                   <View style={{paddingBottom:10,flexDirection:'row'}}>
                      <View style={{flex:1,alignItems:'center',justifyContent:'center'}}>
-                        <Text style={{fontSize:16}}>29 januari 2018</Text>
+                        <Text style={{fontSize:16,color:'#515151'}}>{ this.state.tanggal}</Text>
                      </View>
                      <View style={{marginRight:5}}>
-                        <TouchableOpacity onPress={this.toggleModal} style={{backgroundColor:'red',borderRadius:50,width:20,height:20,alignItems:'center'}}>
+                        {/* <TouchableOpacity onPress={this.toggleModal} style={{backgroundColor:'red',borderRadius:50,width:20,height:20,alignItems:'center'}}>
                            <Text style={{fontWeight:'bold',color:'#fff'}}>X</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                      </View>
                   </View>
                   <View style={{paddingHorizontal:10,flex:1}}>
@@ -421,10 +467,10 @@ successTransaction=()=>{
                                  }
                                  </View>
                                  <View style={{flex:1,paddingLeft:5}}>
-                                    <Text style={{fontSize:16}}>{item.name}</Text>
+                                    <Text style={{fontSize:16,color:'#515151'}}>{item.name}</Text>
                                  </View>
                                  <View style={{alignItems:'flex-end'}}>
-                                    <Text style={{fontSize:16}}>{item.price}</Text>
+                                    <Text style={{fontSize:16,color:'#515151'}}>{convertToRupiah(item.price)}</Text>
                                  </View>
                               </View>
                            ))
@@ -435,46 +481,46 @@ successTransaction=()=>{
                         {/* sub total */}
                         <View style={{ flexDirection: 'row',}}>
                            <View style={{flex:1,alignItems:'flex-end'}}>
-                              <Text style={{fontSize:16}}>Sub total</Text>
+                              <Text style={{fontSize:16,color:'#515151',fontWeight:'bold'}}>Sub total</Text>
                            </View>
                            <View style={{alignItems:'flex-end',width:110}}>
-                              <Text style={{fontSize:16}}>{this.state.totalBayar.subTotal}</Text>
+                              <Text style={{fontSize:16,color:'#515151'}}>{this.state.totalBayar.subTotal}</Text>
                            </View>
                         </View>
                         {/* diskon */}
                         <View style={{ flexDirection: 'row',}}>
                            <View style={{flex:1,alignItems:'flex-end'}}>
-                              <Text style={{fontSize:16}}>diskon (%)</Text>
+                              <Text style={{fontSize:16,color:'#515151'}}>diskon (%)</Text>
                            </View>
                            <View style={{alignItems:'flex-end',width:110}}>
-                              <Text style={{fontSize:16}}>{this.state.totalBayar.discount}</Text>
+                              <Text style={{fontSize:16,color:'#515151'}}>{this.state.totalBayar.discount}</Text>
                            </View>
                         </View>
                         {/* charge service */}
                         <View style={{ flexDirection: 'row',}}>
                            <View style={{flex:1,alignItems:'flex-end'}}>
-                              <Text style={{fontSize:16}}>service change (%)</Text>
+                              <Text style={{fontSize:16,color:'#515151'}}>service change (%)</Text>
                            </View>
                            <View style={{alignItems:'flex-end',width:110}}>
-                              <Text style={{fontSize:16}}>{this.state.totalBayar.serviceChange}</Text>
+                              <Text style={{fontSize:16,color:'#515151'}}>{this.state.totalBayar.serviceChange}</Text>
                            </View>
                         </View>
                         {/* tax */}
                         <View style={{ flexDirection: 'row',}}>
                            <View style={{flex:1,alignItems:'flex-end'}}>
-                              <Text style={{fontSize:16}}>Tax (%)</Text>
+                              <Text style={{fontSize:16,color:'#515151'}}>Tax (%)</Text>
                            </View>
                            <View style={{alignItems:'flex-end',width:110}}>
-                              <Text style={{fontSize:16}}>{this.state.totalBayar.tax}</Text>
+                              <Text style={{fontSize:16,color:'#515151'}}>{this.state.totalBayar.tax}</Text>
                            </View>
                         </View>
                         {/* total */}
                         <View style={{ flexDirection: 'row',borderTopColor:'#515151',borderTopWidth:2,marginTop:5,paddingTop:5}}>
                            <View style={{flex:1,alignItems:'flex-end'}}>
-                              <Text style={{fontWeight:'bold',fontSize:16}}>Total</Text>
+                              <Text style={{fontWeight:'bold',fontSize:16,color:'#515151'}}>Total</Text>
                            </View>
                            <View style={{alignItems:'flex-end',width:110}}>
-                              <Text style={{fontWeight:'bold',fontSize:16}}>Rp.{this.state.totalBayar.total}</Text>
+                              <Text style={{fontWeight:'bold',fontSize:16,color:'#515151'}}>Rp.{this.state.totalBayar.total}</Text>
                            </View>
                         </View>
                      </View>
@@ -489,7 +535,7 @@ successTransaction=()=>{
                            justifyContent: 'center',
                            paddingVertical: 10
                         }}>
-                        <Text>BILL</Text>
+                        <Text style={{color:'#fff',fontWeight:'bold'}}>BILL</Text>
                      </TouchableOpacity>
                   </View>
 

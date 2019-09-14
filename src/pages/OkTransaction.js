@@ -2,10 +2,13 @@ import React, { Component } from 'react'
 import {
    View,
    Text,
-   TouchableOpacity
+   TouchableOpacity,
+   Image
 } from 'react-native'
-
+// import QRCode from 'react-native-qrcode'
 export default class OkTransaction extends Component {
+   
+
    render() {
       return (
          <View style={{flex:1,backgroundColor:'#515151'}}>
@@ -15,6 +18,8 @@ export default class OkTransaction extends Component {
             </View>
             <View style={{justifyContent:'center',alignItems:'center',paddingVertical:15}}>
                <Text style={{fontSize:20,color:'#fff'}}>E-MENU</Text>
+               <Image source={{uri:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSap2uDAFf-HMFDnMIok_ocvDoOELQOLALhAbHlfRwllIquOmDQ'}} style={{backgroundColor:'#fff',width:120,height:120,marginTop:5,borderRadius:2}}/>
+                  
             </View>
             <View style={{flex:1}}>
                <View style={{flex:1,justifyContent:'flex-start',alignItems:'center'}}>

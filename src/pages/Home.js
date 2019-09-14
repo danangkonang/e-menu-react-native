@@ -4,30 +4,31 @@ import {
    Text,
    TouchableOpacity,
    TextInput,
-   AsyncStorage
+   ActivityIndicator
 } from 'react-native'
 import axios from 'axios'
-
+import AsyncStorage from '@react-native-community/async-storage'
 export default class Home extends Component {
    constructor(props){
       super(props)
       this.state={
-         tableNumber:''
+         tableNumber:'',
+         isLoading: true
      }
    }
 
-   componentWillMount(){
-      AsyncStorage.getItem('tableNumber', (error, result) => {
+   async componentWillMount(){
+      await AsyncStorage.getItem('tableNumber', (error, result) => {
          if (result) {
             if(result !== null){
                this.props.navigation.navigate('menu')
+               console.log(result)
             }
-            this.setState({
-               tableNumber: result
-            })
          }
       })
-
+      this.setState({
+         isLoading: false
+      })
    }
 
    order = () => {
@@ -41,12 +42,20 @@ export default class Home extends Component {
          AsyncStorage.setItem('transactionId', response.data.id.toString())
          AsyncStorage.setItem('tableNumber', response.data.tableNumber)
          this.props.navigation.navigate('menu')
+         this.setState({tableNumber:''})
          // console.log(response)
          // console.log(response.data.id)
       })
   }
 
    render() {
+      if(this.state.isLoading){
+         return(
+            <View style={{flex: 1,justifyContent:'center',backgroundColor:'#0397d5'}}>
+               <ActivityIndicator size="large" color="#f1f1f1"/>
+            </View>
+         )
+      }
       return (
          <View style={{flex:1,justifyContent:'center',alignItems:'center',backgroundColor:'#ddd'}}>
 
