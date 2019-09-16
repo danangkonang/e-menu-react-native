@@ -1,14 +1,13 @@
-# e-menu-react-native
-choose the menu online without queuing and reduce restaurant expenses to pay the waiter
+# E-menu
+Mobile application to replace the menu book, users choose menus and orders directly connected to the kitchen, so that it can reduce the queue of buyers and minimize expenses for waiter fees for restaurant entrepreneurs or the like.
 
 
 ## Screenshots
 <p float="left">
-  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-table.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-cart.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-confirm.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-nota.png" width="200" height="350" />
-  <img src="https://danangkonang.github.io/assets/e-menu/w-emenu-sukses.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/emenu-table.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/emenu-cart.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/emenu-nota.png" width="200" height="350" />
+  <img src="https://danangkonang.github.io/assets/e-menu/emenu-barkod.png" width="200" height="350" />
 </p>
 
 **Run aplication:**
@@ -21,5 +20,5 @@ $ react-native run-android #for android
 ```
 
 ## Contact 
-* WA/TELEGRAM: +62 822-2137-0880
+* Phone: +62 822-2137-0880
 * email: dngrifai21@gmail.com
